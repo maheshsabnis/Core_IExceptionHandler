@@ -1,0 +1,6 @@
+@Core_IExceptionHandler_HostAddress = http://localhost:5023
+
+GET {{Core_IExceptionHandler_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
