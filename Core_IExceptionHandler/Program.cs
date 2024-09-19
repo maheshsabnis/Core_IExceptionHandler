@@ -1,6 +1,9 @@
 using Core_IExceptionHandler.Infrastructure;
 using Core_IExceptionHandler.Models;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +18,16 @@ builder.Services.AddExceptionHandler<AppExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//builder.Services.AddHealthChecks();
+
+//https://localhost:7134/api/CatAPI
+builder.Services.AddHealthChecks()
+		.AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),tags: new[] { "sqldb" }).
+		AddUrlGroup(new Uri("https://localhost:7134/api/CatAPI"), name: "webhook1", failureStatus: HealthStatus.Unhealthy, tags: new[] { "webhook" }); 
+
+builder.Services.AddHealthChecksUI()
+    .AddInMemoryStorage();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -24,7 +37,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseExceptionHandler(opt => { });
+ 
 
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
+ 
+app.MapHealthChecksUI();
 
 
 app.MapPost("/dept", async(CompanyContext ctx, Department dept) =>
